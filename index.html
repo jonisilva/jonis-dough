@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Joni's Dough</title>
+<meta name="description" content="Pizza dough calculator: set size, quantity and thickness and get exact ingredient amounts in metric or imperial.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1b1916;
+    --panel: #24211d;
+    --panel-2: #2d2924;
+    --line: #3a352e;
+    --text: #f4ede1;
+    --muted: #a39a8b;
+    --red: #d9442f;
+    --red-dark: #9e2b1b;
+    --yellow: #f5c542;
+    --orange: #f08a24;
+    --crust: #e3a857;
+    --shadow: #3b1209;
+    --pixel: "Silkscreen", ui-monospace, monospace;
+    --mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+  /* ---------- header ---------- */
+  header.top {
+    border-bottom: 2px solid var(--line);
+    background: var(--bg);
+  }
+  header.top .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand { min-width: 0; }
+  .brand svg { display: block; height: 30px; width: auto; max-width: 100%; }
+  .unit-quick { display: flex; gap: 8px; flex: none; }
+  @media (max-width: 600px) { .unit-quick { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background-color: var(--red);
+    background-image:
+      linear-gradient(rgba(0,0,0,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px);
+    background-size: 12px 12px;
+    border-bottom: 4px solid var(--shadow);
+    padding: 48px 0 56px;
+  }
+  .eyebrow {
+    font-family: var(--pixel); font-size: 12px; letter-spacing: .08em;
+    color: #ffd9cf; display: flex; align-items: center; gap: 8px; margin: 0 0 20px;
+  }
+  .eyebrow::before { content: ""; width: 8px; height: 8px; background: var(--yellow); }
+  .hero-logo { display: block; width: 100%; max-width: 640px; height: auto; }
+  .hero h1 {
+    font-family: var(--pixel); font-weight: 700; margin: 22px 0 8px;
+    font-size: clamp(22px, 4vw, 34px); line-height: 1.1; color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--shadow);
+  }
+  .hero p.sub { margin: 0; color: #ffe6de; max-width: 520px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* ---------- layout ---------- */
+  main { padding: 40px 0 64px; }
+  .section-title {
+    font-family: var(--pixel); font-size: 20px; letter-spacing: .04em; margin: 0 0 20px;
+  }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+  .grid > * { min-width: 0; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 480px) { .card { padding: 16px 14px; } }
+  .card {
+    background: var(--panel); border: 2px solid var(--line); padding: 20px;
+    box-shadow: 4px 4px 0 #0e0d0b;
+  }
+  .label {
+    font-family: var(--pixel); font-size: 11px; letter-spacing: .08em;
+    color: var(--muted); text-transform: uppercase; margin: 0;
+  }
+
+  /* ---------- controls ---------- */
+  .controls { display: grid; gap: 26px; }
+  .row-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .row-head .val { font-family: var(--pixel); font-size: 18px; color: var(--yellow); }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; margin: 0;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; background: var(--line); }
+  input[type=range]::-moz-range-track { height: 6px; background: var(--line); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; margin-top: -7px;
+    background: var(--red); border: 3px solid var(--text); border-radius: 0;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; background: var(--red); border: 3px solid var(--text); border-radius: 0;
+  }
+  input[type=range]:focus-visible { outline: 2px dashed var(--yellow); outline-offset: 4px; }
+  .ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
+  .seg button {
+    background: var(--panel-2); border: 2px solid var(--line); padding: 10px 8px;
+    font-family: var(--pixel); font-size: 12px; letter-spacing: .05em; text-transform: uppercase;
+    min-width: 0; overflow-wrap: anywhere; line-height: 1.2;
+    transition: background .12s, border-color .12s;
+  }
+  .seg button:hover { border-color: var(--muted); }
+  .seg button[aria-pressed=true] { background: var(--red); border-color: var(--red); color: #fff; box-shadow: 3px 3px 0 var(--shadow); }
+  .seg.small button { padding: 6px 10px; font-size: 11px; }
+
+  .units-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 520px) { .units-row { grid-template-columns: minmax(0, 1fr); } }
+  .units-row .label { margin-bottom: 8px; }
+
+  .toggle-card {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    background: var(--panel-2); border: 2px solid var(--line); padding: 14px;
+  }
+  .toggle-card strong { font-family: var(--pixel); font-size: 13px; font-weight: 400; display: block; }
+  .toggle-card span { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .switch { position: relative; width: 48px; height: 26px; flex: none; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; z-index: 1; }
+  .switch i { position: absolute; inset: 0; background: var(--line); }
+  .switch i::after { content: ""; position: absolute; width: 18px; height: 18px; left: 4px; top: 4px; background: var(--muted); transition: transform .15s; }
+  .switch input:checked + i { background: var(--red); }
+  .switch input:checked + i::after { transform: translateX(22px); background: #fff; }
+  .switch input:focus-visible + i { outline: 2px dashed var(--yellow); outline-offset: 3px; }
+
+  .tip {
+    display: none; border-left: 4px solid var(--yellow); background: rgba(245,197,66,.08); padding: 12px 14px; font-size: 13px;
+  }
+  .tip.show { display: block; }
+  .tip b { font-family: var(--pixel); font-weight: 400; color: var(--yellow); font-size: 11px; letter-spacing: .06em; display: block; margin-bottom: 2px; text-transform: uppercase; }
+
+  /* ---------- results ---------- */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+  @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--panel-2); border: 2px solid var(--line); padding: 12px 10px; min-width: 0; }
+  .stat .num { font-family: var(--pixel); font-size: clamp(18px, 3vw, 24px); color: var(--text); line-height: 1.2; margin: 6px 0 2px; overflow-wrap: anywhere; }
+  .stat.hl { background: var(--red); border-color: var(--red); }
+  .stat.hl .label, .stat.hl .unit { color: #ffe0d8; }
+  .stat .unit { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-family: var(--pixel); font-weight: 400; font-size: 10px; letter-spacing: .08em; color: var(--muted); padding: 0 0 8px; border-bottom: 2px solid var(--text); }
+  th:nth-child(2), td:nth-child(2) { text-align: right; }
+  th:nth-child(3), td:nth-child(3) { text-align: right; width: 64px; }
+  td { padding: 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { text-transform: uppercase; font-weight: 700; font-size: 13px; }
+  td .s { display: block; font-weight: 400; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  td .amt { font-weight: 700; font-size: 15px; }
+  td .u { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  td .hint { display: block; font-size: 11px; color: var(--muted); }
+  td .pct { color: var(--muted); font-size: 12px; }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+  .pill { font-family: var(--pixel); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--line); padding: 4px 8px; }
+  .pill.hl { background: var(--yellow); border-color: var(--yellow); color: #1b1916; }
+
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn {
+    background: var(--panel-2); border: 2px solid var(--text); padding: 12px; font-family: var(--pixel);
+    font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  }
+  .btn:hover { background: var(--text); color: var(--bg); }
+  .btn.primary { background: var(--yellow); color: #1b1916; border-color: var(--yellow); box-shadow: 3px 3px 0 #6b520f; }
+  .btn.primary:hover { filter: brightness(1.05); }
+
+  details.steps { margin-top: 24px; }
+  details.steps summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--pixel); font-size: 13px; letter-spacing: .05em; text-transform: uppercase;
+    padding: 14px; background: var(--panel-2); border: 2px solid var(--line);
+  }
+  details.steps summary::-webkit-details-marker { display: none; }
+  details.steps summary::after { content: "▼"; font-size: 10px; transition: transform .15s; }
+  details.steps[open] summary::after { transform: rotate(180deg); }
+  .step-list { border: 2px solid var(--line); border-top: 0; padding: 8px 14px 14px; }
+  .step { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+  .step:last-child { border-bottom: 0; }
+  .step b { font-family: var(--pixel); font-weight: 400; color: var(--red); min-width: 24px; }
+
+  footer { border-top: 2px solid var(--line); padding: 20px 0 32px; color: var(--muted); font-size: 12px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="Joni's Dough home"><svg id="logoSmall" role="img" aria-label="Joni's Dough"></svg></a>
+    <div class="unit-quick">
+      <div class="seg small" data-group="system" role="group" aria-label="Measurement system">
+        <button data-v="metric">g / cm</button><button data-v="imperial">oz / in</button>
+      </div>
+      <div class="seg small" data-group="temp" role="group" aria-label="Temperature unit">
+        <button data-v="C">°C</button><button data-v="F">°F</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">FREE TOOL · NO SIGNUP</p>
+    <svg id="logoBig" class="hero-logo" role="img" aria-label="Joni's Dough"></svg>
+    <h1>DOUGH CALCULATOR.</h1>
+    <p class="sub">Dial in your size, quantity and thickness. Get exact ingredient amounts.</p>
+  </div>
+</section>
+
+<main>
+  <div class="wrap">
+    <h2 class="section-title">YOUR PIZZA SETTINGS</h2>
+    <div class="grid">
+      <!-- settings -->
+      <div class="card controls">
+        <div class="units-row">
+          <div>
+            <p class="label">Units</p>
+            <div class="seg" data-group="system" role="group" aria-label="Measurement system">
+              <button data-v="metric">Metric</button><button data-v="imperial">Imperial</button>
+            </div>
+          </div>
+          <div>
+            <p class="label">Temperature</p>
+            <div class="seg" data-group="temp" role="group" aria-label="Temperature unit">
+              <button data-v="C">Celsius</button><button data-v="F">Fahrenheit</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="row-head"><label class="label" for="size">Pizza size</label><span class="val" id="sizeVal"></span></div>
+          <input type="range" id="size">
+          <div class="ticks"><span id="sMin"></span><span id="sMid"></span><span id="sMax"></span></div>
+        </div>
+
+        <div>
+          <div class="row-head"><label class="label" for="qty">Number of pizzas</label><span class="val" id="qtyVal"></span></div>
+          <input type="range" id="qty" min="1" max="10" step="1">
+          <div class="ticks"><span>1</span><span>5</span><span>10</span></div>
+        </div>
+
+        <div>
+          <div class="row-head"><span class="label">Thickness</span></div>
+          <div class="seg" data-group="thick" role="group" aria-label="Thickness">
+            <button data-v="thin">Thin</button><button data-v="regular">Regular</button><button data-v="thick">Thick</button>
+          </div>
+        </div>
+
+        <label class="toggle-card">
+          <div><strong>GLUTEN FREE</strong><span>GF flour + adjusted hydration</span></div>
+          <span class="switch"><input type="checkbox" id="gf"><i></i></span>
+        </label>
+
+        <div class="tip" id="tip"><b id="tipLbl"></b><span id="tipTxt"></span></div>
+      </div>
+
+      <!-- results -->
+      <div class="card">
+        <div class="stats">
+          <div class="stat hl"><p class="label">Dough ball</p><p class="num" id="rBall"></p><p class="unit" id="rBallU"></p></div>
+          <div class="stat"><p class="label">Total flour</p><p class="num" id="rFlour"></p><p class="unit" id="rFlourU"></p></div>
+          <div class="stat"><p class="label">Total water</p><p class="num" id="rWater"></p><p class="unit" id="rWaterU"></p></div>
+          <div class="stat"><p class="label">Hydration</p><p class="num" id="rHydr"></p><p class="unit">percent</p></div>
+        </div>
+
+        <table>
+          <thead><tr><th>INGREDIENT</th><th>AMOUNT</th><th>BAKER'S %</th></tr></thead>
+          <tbody id="ing"></tbody>
+        </table>
+
+        <div class="pills" id="pills"></div>
+
+        <div class="actions">
+          <button class="btn primary" id="copyBtn">Copy recipe</button>
+          <button class="btn" id="printBtn">Print / Save</button>
+        </div>
+
+        <details class="steps" id="steps">
+          <summary id="stepsTitle">Dough making instructions</summary>
+          <div class="step-list" id="stepList"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap"><span>JONI'S DOUGH · made with flour, water &amp; pixels</span><span id="convNote"></span></div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================= pixel logo ================= */
+  const FONT = {
+    J: ["00111","00010","00010","00010","10010","10010","01100"],
+    O: ["01110","10001","10001","10001","10001","10001","01110"],
+    N: ["10001","11001","11001","10101","10011","10011","10001"],
+    I: ["111","010","010","010","010","010","111"],
+    "'": ["1","1","1","0","0","0","0"],
+    S: ["01111","10000","10000","01110","00001","00001","11110"],
+    D: ["11110","10001","10001","10001","10001","10001","11110"],
+    U: ["10001","10001","10001","10001","10001","10001","01110"],
+    G: ["01111","10000","10000","10111","10001","10001","01111"],
+    H: ["10001","10001","10001","11111","10001","10001","10001"],
+    " ": ["00","00","00","00","00","00","00"]
+  };
+  // 11x11 pizza slice: c = crust, y = cheese, r = pepperoni, k = outline
+  const SLICE = [
+    "kkkkkkkkkkk",
+    "kccccccccck",
+    "kkkkkkkkkkk",
+    ".kyyryyyyk.",
+    ".kyrrryryk.",
+    "..kyryyyk..",
+    "..kyyyrrk..",
+    "...kyrrk...",
+    "...kyyk....",
+    "....kk.....",
+    "....k......"
+  ];
+  const SLICE_COLORS = { k: "#3b1209", c: "#e3a857", y: "#f5c542", r: "#d9442f" };
+
+  function buildLogo(svg, { withSlice = true, scale = 1 } = {}) {
+    const text = "JONI'S DOUGH";
+    const rects = [];
+    let x = 0;
+    const sliceW = withSlice ? SLICE[0].length + 2 : 0;
+    // pizza slice, vertically centred against 7-row text (11 rows tall -> start at -2)
+    if (withSlice) {
+      SLICE.forEach((row, ry) => [...row].forEach((ch, rx) => {
+        if (SLICE_COLORS[ch]) rects.push({ x: rx, y: ry - 2, c: SLICE_COLORS[ch], shadow: false });
+      }));
+      x = sliceW;
+    }
+    for (const ch of text) {
+      const g = FONT[ch];
+      g.forEach((row, ry) => [...row].forEach((bit, rx) => {
+        if (bit === "1") rects.push({ x: x + rx, y: ry, text: true });
+      }));
+      x += g[0].length + 1;
+    }
+    const w = x;           // total width in pixels
+    const top = withSlice ? -2 : 0;
+    const h = withSlice ? 11 : 8;
+    let out = "";
+    // drop shadow for text pixels
+    rects.filter(r => r.text).forEach(r => { out += `<rect x="${r.x + 1}" y="${r.y + 1}" width="1" height="1" fill="#3b1209"/>`; });
+    rects.forEach(r => {
+      const fill = r.text ? (r.y < 3 ? "#f5c542" : r.y < 5 ? "#f6a93a" : "#f08a24") : r.c;
+      out += `<rect x="${r.x}" y="${r.y}" width="1.02" height="1.02" fill="${fill}"/>`;
+    });
+    svg.setAttribute("viewBox", `0 ${top} ${w + 1} ${h}`);
+    svg.setAttribute("shape-rendering", "crispEdges");
+    svg.innerHTML = out;
+  }
+  buildLogo(document.getElementById("logoSmall"));
+  buildLogo(document.getElementById("logoBig"));
+
+  /* ================= state ================= */
+  const THICK = { thin: 1.8, regular: 2.11, thick: 2.75 };
+  const G_PER_OZ = 28.349523125;
+  const CM_PER_IN = 2.54;
+  // grams per teaspoon, for imperial helper hints
+  const G_PER_TSP = { yeast: 3.1, salt: 6.0, sugar: 4.2, oil: 4.5 };
+
+  const defaults = { system: "metric", temp: "C", sizeIn: 12, qty: 4, thick: "regular", gf: false };
+  let state = { ...defaults };
+  try { Object.assign(state, JSON.parse(localStorage.getItem("jonisDough") || "{}")); } catch (e) {}
+  const save = () => { try { localStorage.setItem("jonisDough", JSON.stringify(state)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+
+  /* ================= formatting ================= */
+  const isMetric = () => state.system === "metric";
+  const temp = f => state.temp === "F" ? `${f}°F` : `${Math.round((f - 32) * 5 / 9 / 5) * 5}°C`;
+  const sizeLabel = inches => isMetric() ? `${Math.round(inches * CM_PER_IN)} cm` : `${Math.round(inches)}"`;
+
+  function weight(g, small = false) {
+    if (isMetric()) {
+      return { n: small ? g.toFixed(1) : String(Math.round(g)), u: "g" };
+    }
+    const oz = g / G_PER_OZ;
+    return { n: oz < 1 ? oz.toFixed(2) : oz.toFixed(1), u: "oz" };
+  }
+  function tsp(g, kind) {
+    const t = g / G_PER_TSP[kind];
+    if (t >= 9) return `≈ ${(t / 3).toFixed(1)} tbsp`;
+    const q = Math.round(t * 4) / 4;
+    const whole = Math.floor(q), frac = q - whole;
+    const f = { 0.25: "¼", 0.5: "½", 0.75: "¾" }[frac] || "";
+    return `≈ ${whole || ""}${f || (whole ? "" : "¼")} tsp`;
+  }
+  function lbOz(g) {
+    const oz = g / G_PER_OZ;
+    if (oz < 16) return "";
+    const lb = Math.floor(oz / 16);
+    return `${lb} lb ${(oz - lb * 16).toFixed(1)} oz`;
+  }
+
+  /* ================= calculation (ported from reference) ================= */
+  function compute() {
+    const sz = state.sizeIn, qt = state.qty, gf = state.gf, cT = THICK[state.thick];
+    const baseFlour = gf ? 333 * 6 : 1509.797685 * (480 / 425);  // flour for 6 × 16" regular
+    const doughFactor = 2550 / 1509.797685;                      // total dough ÷ flour
+    const flour = baseFlour * Math.pow(sz / 16, 2) * (qt / 6) * (cT / 2.11);
+    const hyd = gf ? 0.8 : 0.62;
+    return {
+      flour,
+      water: flour * hyd,
+      hyd,
+      yeast: flour * 0.004,
+      salt: flour * 0.025,
+      sugar: flour * 0.02,
+      oil: flour * 0.033,
+      ball: flour * doughFactor / qt
+    };
+  }
+
+  /* ================= render ================= */
+  function setSeg(group, value) {
+    document.querySelectorAll(`.seg[data-group="${group}"] button`).forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.v === value)));
+  }
+
+  function configureSizeSlider() {
+    const s = $("size");
+    if (isMetric()) {
+      s.min = 25; s.max = 51; s.step = 1; s.value = Math.round(state.sizeIn * CM_PER_IN);
+      $("sMin").textContent = "25 cm"; $("sMid").textContent = "38 cm"; $("sMax").textContent = "51 cm";
+    } else {
+      s.min = 10; s.max = 20; s.step = 1; s.value = Math.round(state.sizeIn);
+      $("sMin").textContent = '10"'; $("sMid").textContent = '15"'; $("sMax").textContent = '20"';
+    }
+  }
+
+  function render() {
+    setSeg("system", state.system);
+    setSeg("temp", state.temp);
+    setSeg("thick", state.thick);
+    $("gf").checked = state.gf;
+    $("qty").value = state.qty;
+
+    const r = compute();
+    const gf = state.gf;
+    $("sizeVal").textContent = sizeLabel(state.sizeIn);
+    $("qtyVal").textContent = state.qty;
+
+    const ball = weight(r.ball), fl = weight(r.flour), wa = weight(r.water);
+    const unitWord = isMetric() ? "grams" : "ounces";
+    $("rBall").textContent = ball.n; $("rBallU").textContent = unitWord + " each";
+    $("rFlour").textContent = fl.n; $("rFlourU").textContent = unitWord;
+    $("rWater").textContent = wa.n; $("rWaterU").textContent = unitWord;
+    $("rHydr").textContent = Math.round(r.hyd * 100);
+
+    const rows = [
+      { name: gf ? "GF flour" : "Bread flour", sub: gf ? "Caputo GF recommended" : "12–14% protein", g: r.flour, pct: "100%", extra: !isMetric() ? lbOz(r.flour) : "" },
+      { name: "Water", sub: `Cold, under ${temp(60)}`, g: r.water, pct: Math.round(r.hyd * 100) + "%", extra: !isMetric() ? lbOz(r.water) : "" },
+      { name: "Yeast", sub: "Active dry", g: r.yeast, pct: "0.4%", small: true, kind: "yeast" },
+      { name: "Salt", sub: "Fine sea salt", g: r.salt, pct: "2.5%", kind: "salt" },
+      { name: "Sugar", sub: "", g: r.sugar, pct: "2%", kind: "sugar" },
+      { name: "Olive oil", sub: "Extra virgin", g: r.oil, pct: "3.3%", kind: "oil" }
+    ];
+    $("ing").innerHTML = rows.map(row => {
+      const w = weight(row.g, row.small);
+      const hint = row.extra || (!isMetric() && row.kind ? tsp(row.g, row.kind) : "");
+      return `<tr><td>${row.name}${row.sub ? `<span class="s">${row.sub}</span>` : ""}</td>` +
+        `<td><span class="amt">${w.n}</span><span class="u">${w.u}</span>${hint ? `<span class="hint">${hint}</span>` : ""}</td>` +
+        `<td><span class="pct">${row.pct}</span></td></tr>`;
+    }).join("");
+
+    const bakeF = state.thick === "thick" ? 450 : 550;
+    const pills = [
+      { t: gf ? "Gluten-free" : "Regular dough", hl: true },
+      { t: gf ? "Cold rest up to 48 hrs" : "Cold ferment 2–4 days" },
+      { t: `${state.qty} ball${state.qty > 1 ? "s" : ""} · ${sizeLabel(state.sizeIn)} · ${state.thick}` },
+      { t: `Bake ${temp(bakeF)}` }
+    ];
+    $("pills").innerHTML = pills.map(p => `<span class="pill${p.hl ? " hl" : ""}">${p.t}</span>`).join("");
+
+    // tips (same priority order as the reference)
+    let tip = null;
+    if (gf) tip = ["GF tip", "GF dough is stickier — oil your hands before shaping."];
+    else if (state.sizeIn >= 18) tip = ["Big pizza tip", `${sizeLabel(state.sizeIn)} is large — preheat for the full 45 min at max temp.`];
+    else if (state.qty >= 8) tip = ["Batch tip", `Making ${state.qty} pizzas? Shape all balls at once — they keep 4 days in the fridge.`];
+    else if (state.thick === "thick") tip = ["Thick crust", `Drop to ${temp(450)} and give it 10–12 min instead of 6–8.`];
+    else if (state.thick === "thin") tip = ["Thin crust", "Thin crust cooks fast — 4–5 minutes. Watch it closely."];
+    $("tip").classList.toggle("show", !!tip);
+    if (tip) { $("tipLbl").textContent = tip[0]; $("tipTxt").textContent = tip[1]; }
+
+    const steps = gf
+      ? ["Add cold water and yeast", "Add GF flour + olive oil, mix 2 min", "Add sugar and salt, mix 3–4 min", "Refrigerate 15 min to firm up", "Oil hands, shape into balls", "Refrigerate up to 48 hours", "Bring to room temp before using"]
+      : [`Cool water to under ${temp(60)}`, "Mix water + active dry yeast", "Add flour + olive oil, mix 2 min", "Add sugar and salt on low", "Mix 10 more minutes", "Cover, rest 1–3 hours", "Shape into balls, seal seam", "Refrigerate 2–4 days (3 ideal)", "Bring to room temp before using"];
+    $("stepsTitle").textContent = gf ? "Gluten-free instructions" : "Dough making instructions";
+    $("stepList").innerHTML = steps.map((s, i) => `<div class="step"><b>${String(i + 1).padStart(2, "0")}</b><span>${s}</span></div>`).join("");
+
+    $("convNote").textContent = isMetric() ? "Weights in grams · sizes in cm" : "1 oz = 28.35 g · tsp values are approximate";
+    save();
+  }
+
+  /* ================= events ================= */
+  document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const group = seg.dataset.group;
+    if (group === "system" && state.system !== b.dataset.v) { state.system = b.dataset.v; configureSizeSlider(); }
+    if (group === "temp") state.temp = b.dataset.v;
+    if (group === "thick") state.thick = b.dataset.v;
+    render();
+  }));
+  $("size").addEventListener("input", e => {
+    const v = parseFloat(e.target.value);
+    state.sizeIn = isMetric() ? v / CM_PER_IN : v;
+    render();
+  });
+  $("qty").addEventListener("input", e => { state.qty = parseInt(e.target.value, 10); render(); });
+  $("gf").addEventListener("change", e => { state.gf = e.target.checked; render(); });
+
+  function recipeText() {
+    let t = `JONI'S DOUGH RECIPE\n${state.qty}× ${sizeLabel(state.sizeIn)} ${state.thick} pizza · Dough ball: ${$("rBall").textContent} ${isMetric() ? "g" : "oz"}\n\n`;
+    document.querySelectorAll("#ing tr").forEach(tr => {
+      const c = tr.querySelectorAll("td");
+      t += `${c[0].firstChild.textContent}: ${c[1].querySelector(".amt").textContent} ${c[1].querySelector(".u").textContent}\n`;
+    });
+    t += "\nSteps:\n" + [...document.querySelectorAll("#stepList .step span")].map((s, i) => `${i + 1}. ${s.textContent}`).join("\n");
+    return t;
+  }
+  $("copyBtn").addEventListener("click", async () => {
+    const b = $("copyBtn"), o = b.textContent;
+    try { await navigator.clipboard.writeText(recipeText()); b.textContent = "✓ Copied!"; }
+    catch (e) { b.textContent = "Copy failed"; }
+    setTimeout(() => b.textContent = o, 1800);
+  });
+  $("printBtn").addEventListener("click", () => {
+    const stats = [["Dough ball", "rBall", "rBallU"], ["Total flour", "rFlour", "rFlourU"], ["Total water", "rWater", "rWaterU"], ["Hydration", "rHydr", null]]
+      .map(([l, n, u]) => `<div class="stat"><p class="l">${l}</p><p class="v">${$(n).textContent}</p><p class="l">${u ? $(u).textContent : "percent"}</p></div>`).join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Joni's Dough Recipe</title><style>
+      body{font-family:system-ui,sans-serif;max-width:700px;margin:40px auto;color:#000;padding:0 16px}
+      .logo{height:40px;margin-bottom:8px}h2{font-size:15px;margin:24px 0 8px}
+      .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 24px}.stat{border:1px solid #ddd;padding:10px;border-radius:6px}
+      .l{font-size:11px;text-transform:uppercase;color:#888;margin:0}.v{font-size:22px;font-weight:600;margin:2px 0}
+      table{width:100%;border-collapse:collapse}th{font-size:11px;color:#888;text-align:left;border-bottom:2px solid #000;padding-bottom:6px}
+      td{padding:8px 0;border-bottom:1px solid #eee;font-size:14px}td:nth-child(2),th:nth-child(2),td:nth-child(3),th:nth-child(3){text-align:right}
+      .s,.hint{display:block;font-size:11px;color:#888}.u{font-size:11px;color:#888;margin-left:2px}.pct{color:#888}
+      .pills{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}.pill{font-size:12px;border:1px solid #ccc;padding:3px 9px;border-radius:20px}.pill.hl{background:#000;color:#fff}
+      .step{display:flex;gap:10px;font-size:14px;margin-bottom:6px}.step b{min-width:22px}
+    </style></head><body>
+      <svg class="logo" viewBox="${$("logoSmall").getAttribute("viewBox")}" shape-rendering="crispEdges">${$("logoSmall").innerHTML}</svg>
+      <div class="stats">${stats}</div>
+      <table><thead><tr><th>INGREDIENT</th><th>AMOUNT</th><th>BAKER'S %</th></tr></thead><tbody>${$("ing").innerHTML}</tbody></table>
+      <div class="pills">${$("pills").innerHTML}</div>
+      <h2>${$("stepsTitle").textContent}</h2>${$("stepList").innerHTML}
+    </body></html>`;
+    const w = window.open("", "_blank", "width=800,height=900");
+    if (!w) return;
+    w.document.write(html); w.document.close(); w.focus(); w.print();
+  });
+
+  configureSizeSlider();
+  render();
+})();
+</script>
+</body>
+</html>
